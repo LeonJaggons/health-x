@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "431009068920",
+    "project_id": "healthx-app",
+    "storage_bucket": "healthx-app.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:431009068920:android:db87c946d53951118b3a8d",
+        "android_client_info": {
+          "package_name": "com.healthx"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "431009068920-iobkbkki21n5o0q6sadbgu47os6jh6v5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD6EGefPgcXL8EHlKFIwNzTeUTYS23zVXM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "431009068920-iobkbkki21n5o0q6sadbgu47os6jh6v5.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
