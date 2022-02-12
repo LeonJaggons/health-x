@@ -13,13 +13,21 @@ import {
 	Row,
 	Column,
 	Divider,
+	Select,
 } from "native-base";
 import React from "react";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { NavigationContainer } from "@react-navigation/native";
-import { DrawerContentScrollView, DrawerItemList, createDrawerNavigator } from "@react-navigation/drawer";
-const Drawer = createDrawerNavigator()
+import { useSelector, useDispatch } from "react-redux";
+import {
+	DrawerContentScrollView,
+	DrawerItemList,
+	createDrawerNavigator,
+} from "@react-navigation/drawer";
+import { auth, createHealthXID } from "../../firebase-api/firebase_auth";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createHealthXUser } from "../../firebase-api/firebase_firestore";
+const Drawer = createDrawerNavigator();
 const SignUp = () => {
+	console.log(createHealthXID());
 	return (
 		<Drawer.Navigator
 			initialRouteName={"Personal"}
@@ -27,12 +35,11 @@ const SignUp = () => {
 			drawerContent={(props) => (
 				<DrawerContentScrollView {...props}>
 					<HStack alignItems={"center"} justifyContent={"center"}>
-					<Heading>Sign Up</Heading>
+						<Heading>Sign Up</Heading>
 					</HStack>
-					<DrawerItemList {...props}  />
+					<DrawerItemList {...props} />
 				</DrawerContentScrollView>
 			)}
-			
 		>
 			<Drawer.Screen component={PersonalSignUp} name={"Personal"} />
 			<Drawer.Screen component={ContactSignUp} name={"Contact"} />
@@ -57,34 +64,36 @@ const SignUpContainer = (props) => {
 		>
 			<Row my={5}>
 				<Column flexShrink={1}>
-					<IconButton icon={
-						<Ionicons name={"ios-menu"} />
-					}/>
+					<IconButton icon={<Ionicons name={"ios-menu"} />} />
 				</Column>
 				<Column flex={1}>
-				<Row alignItems={"center"} justifyContent={"center"}>
-
-				<Heading color={"#365695"} size={"lg"}>{props.title}</Heading>
-				<Heading> Details</Heading>
-				</Row>
+					<Row alignItems={"center"} justifyContent={"center"}>
+						<Heading color={"#365695"} size={"lg"}>
+							{props.title}
+						</Heading>
+						<Heading> Details</Heading>
+					</Row>
 				</Column>
 			</Row>
 			<Box flexGrow={1} w={"100%"}>
-			<ScrollView w={"100%"}>
-				<VStack
-					space={3}
-					w={"100%"}
-					mt={4}
-					px={4}
-					alignItems={"center"}
-					justifyContent={"center"}
-				>
-					{props.children}
-				</VStack>
-			</ScrollView>
+				<ScrollView w={"100%"}>
+					<VStack
+						space={3}
+						w={"100%"}
+						mt={4}
+						px={4}
+						alignItems={"center"}
+						justifyContent={"center"}
+					>
+						{props.children}
+					</VStack>
+				</ScrollView>
 			</Box>
-			<SignUpFooter prevScreen={props.prevScreen} nextScreen={props.nextScreen} navigation={props.navigation}/>
-			
+			<SignUpFooter
+				prevScreen={props.prevScreen}
+				nextScreen={props.nextScreen}
+				navigation={props.navigation}
+			/>
 		</VStack>
 	);
 };
@@ -102,15 +111,38 @@ const SignUpHeader = () => {
 	);
 };
 
-const SignUpFooter = ({navigation, nextScreen, prevScreen}) => {
+const SignUpFooter = ({ navigation, nextScreen, prevScreen }) => {
+	const signUpCreds = useSelector((state) => state.signIn.signUpCreds);
 	return (
 		<HStack w={"90%"} space={4} mt={3}>
-			{prevScreen && <BackButton prevScreen={prevScreen} navigator={navigation}/> }
-			{nextScreen &&<ContinueButton nextScreen={nextScreen} navigator={navigation} /> }
+			{prevScreen && (
+				<BackButton prevScreen={prevScreen} navigator={navigation} />
+			)}
+			{nextScreen && (
+				<ContinueButton
+					nextScreen={nextScreen}
+					navigator={navigation}
+				/>
+			)}
+			{prevScreen && !nextScreen && (
+				<Button
+					onPress={() => {
+						createUserWithEmailAndPassword(
+							auth,
+							signUpCreds.contact.email,
+							signUpCreds.user.password
+						).then((userCreds) => {
+							const firebaseID = userCreds.user.uid;
+							createHealthXUser(firebaseID, signUpCreds);
+						});
+					}}
+				>
+					Create Account
+				</Button>
+			)}
 		</HStack>
-
-	)
-}
+	);
+};
 
 const SignUpDateInput = ({ place, icon }) => {
 	return (
@@ -132,23 +164,33 @@ const SignUpDateInput = ({ place, icon }) => {
 
 const SignUpSelectInput = ({ place, icon, options }) => {
 	return (
-		<Input
-			InputLeftElement={
-				<Box ml={3} mr={1}>
-					<Ionicons
-						name={"ios-" + icon}
-						size={16}
-						color={"#365695"}
-					/>
-				</Box>
-			}
-			placeholder={place}
-			isFullWidth
-		/>
+		<Select placeholder={place} w={"100%"}>
+			{options.map((opt) => (
+				<Select.Item label={opt} value={opt} />
+			))}
+		</Select>
 	);
 };
 
-const SignUpInput = ({ place, icon }) => {
+const SignUpInput = ({ place, icon, fieldType = "null", field = "null" }) => {
+	const dispatch = useDispatch();
+	const signUpCreds = useSelector((state) => state.signIn.signUpCreds);
+	const signUpValue = useSelector(
+		(state) => state.signIn.signUpCreds[fieldType][field]
+	);
+
+	React.useEffect(() => {
+		console.log(signUpCreds);
+	}, [signUpCreds]);
+
+	const setCreateUserField = (value) => {
+		dispatch({
+			type: "SET_SIGN_UP_FIELD",
+			fieldType: fieldType,
+			field: field,
+			payload: value,
+		});
+	};
 	return (
 		<Input
 			InputLeftElement={
@@ -161,6 +203,7 @@ const SignUpInput = ({ place, icon }) => {
 				</Box>
 			}
 			placeholder={place}
+			onChangeText={(text) => setCreateUserField(text)}
 			isFullWidth
 		/>
 	);
@@ -168,7 +211,11 @@ const SignUpInput = ({ place, icon }) => {
 
 const PersonalSignUp = ({ navigation }) => {
 	return (
-		<SignUpContainer title={"Personal"} navigation={navigation} nextScreen={"Contact"}>
+		<SignUpContainer
+			title={"Personal"}
+			navigation={navigation}
+			nextScreen={"Contact"}
+		>
 			<VStack mb={1} space={2} alignItems={"center"}>
 				<Box
 					borderColor={"muted.100"}
@@ -188,57 +235,127 @@ const PersonalSignUp = ({ navigation }) => {
 					</Avatar>
 				</Box>
 			</VStack>
-			<SignUpInput place={"Username"} icon={"server"} />
+			<SignUpInput
+				place={"Username"}
+				icon={"server"}
+				fieldType={"personal"}
+				field={"username"}
+			/>
 			<Row w={"100%"} space={2}>
 				<Column flexGrow={1}>
-					<SignUpInput place={"First Name"} icon={"person"} />
+					<SignUpInput
+						place={"First Name"}
+						icon={"person"}
+						fieldType={"personal"}
+						field={"firstName"}
+					/>
 				</Column>
 				<Column flexGrow={1}>
-					<SignUpInput place={"Last Name"} icon={"people"} />
+					<SignUpInput
+						place={"Last Name"}
+						icon={"people"}
+						fieldType={"personal"}
+						field={"lastName"}
+					/>
 				</Column>
 			</Row>
 			<Row w={"100%"} space={2}>
 				<Column flexGrow={1}>
-					<SignUpInput place={"Password"} icon={"lock-open"} />
+					<SignUpInput
+						place={"Password"}
+						icon={"lock-open"}
+						fieldType={"user"}
+						field={"password"}
+					/>
 				</Column>
 				<Column flexGrow={1}>
 					<SignUpInput
 						place={"Confirm Password"}
 						icon={"lock-closed"}
+						fieldType={"user"}
+						field={"confirmPassword"}
 					/>
 				</Column>
 			</Row>
 			<SignUpDateInput place={"Date of Birth"} icon={"today"} />
-			<SignUpDateInput place={"Gender"} icon={"woman"} />
+			<SignUpSelectInput place={"Gender"} options={["Male", "Female"]} />
 		</SignUpContainer>
 	);
 };
 
 const ContactSignUp = ({ navigation }) => {
 	return (
-		<SignUpContainer title={"Contact"} navigation={navigation} nextScreen={"Emergency Contact"} prevScreen={"Personal"}>
-			<SignUpInput place={"Email Address"} icon={"mail-open"} />
-			<SignUpInput place={"Cell Phone Number"} icon={"phone-portrait"} />
-			<SignUpInput place={"Other Phone Number"} icon={"call"} />
+		<SignUpContainer
+			title={"Contact"}
+			navigation={navigation}
+			nextScreen={"Emergency Contact"}
+			prevScreen={"Personal"}
+		>
+			<SignUpInput
+				place={"Email Address"}
+				icon={"mail-open"}
+				fieldType={"contact"}
+				field={"email"}
+			/>
+			<SignUpInput
+				place={"Cell Phone Number"}
+				icon={"phone-portrait"}
+				fieldType={"contact"}
+				field={"cellNumber"}
+			/>
+			<SignUpInput
+				place={"Other Phone Number"}
+				icon={"call"}
+				fieldType={"contact"}
+				field={"otherNumber"}
+			/>
 		</SignUpContainer>
 	);
 };
 
 const EmergencyContactSignUp = ({ navigation }) => {
 	return (
-		<SignUpContainer title={"Emergency Contact"} prevScreen={"Contact"} nextScreen={"Address"} navigation={navigation}>
+		<SignUpContainer
+			title={"Emergency Contact"}
+			prevScreen={"Contact"}
+			nextScreen={"Address"}
+			navigation={navigation}
+		>
 			<Row w={"100%"} space={2}>
 				<Column flexGrow={1}>
-					<SignUpInput place={"Contact First Name"} icon={"person"} />
+					<SignUpInput
+						place={"Contact First Name"}
+						icon={"person"}
+						fieldType={"emergencyContact"}
+						field={"firstName"}
+					/>
 				</Column>
 				<Column flexGrow={1}>
-					<SignUpInput place={"Contact Last Name"} icon={"people"} />
+					<SignUpInput
+						place={"Contact Last Name"}
+						icon={"people"}
+						fieldType={"emergencyContact"}
+						field={"lastName"}
+					/>
 				</Column>
 			</Row>
-			<SignUpInput place={"Contact Email Address"} icon={"mail-open"} />
+			<SignUpInput
+				place={"Contact Relationship"}
+				icon={"mail-open"}
+				fieldType={"emergencyContact"}
+				field={"relationship"}
+			/>
+			<SignUpInput
+				place={"Contact Email Address"}
+				icon={"mail-open"}
+				fieldType={"emergencyContact"}
+				field={"email"}
+			/>
 			<SignUpInput
 				place={"Contact Cell Phone Number"}
 				icon={"phone-portrait"}
+				fieldType={"emergencyContact"}
+				field={"cellNumber"}
 			/>
 		</SignUpContainer>
 	);
@@ -246,11 +363,35 @@ const EmergencyContactSignUp = ({ navigation }) => {
 
 const AddressSignUp = ({ navigation }) => {
 	return (
-		<SignUpContainer title={"Address"} prevScreen={"Contact"} navigation={navigation}>
-			<SignUpInput place={"Address"} icon={"home"} />
-			<SignUpInput place={"City"} icon={"business"} />
-			<SignUpInput place={"Zip Code"} icon={"map"} />
-			<SignUpInput place={"State"} icon={"earth"} />
+		<SignUpContainer
+			title={"Address"}
+			prevScreen={"Contact"}
+			navigation={navigation}
+		>
+			<SignUpInput
+				place={"Address"}
+				icon={"home"}
+				fieldType={"address"}
+				field={"address"}
+			/>
+			<SignUpInput
+				place={"City"}
+				icon={"business"}
+				fieldType={"address"}
+				field={"city"}
+			/>
+			<SignUpInput
+				place={"State"}
+				icon={"earth"}
+				fieldType={"address"}
+				field={"state"}
+			/>
+			<SignUpInput
+				place={"Zip Code"}
+				icon={"map"}
+				fieldType={"address"}
+				field={"zipcode"}
+			/>
 		</SignUpContainer>
 	);
 };
@@ -279,9 +420,7 @@ const BackButton = ({ navigator, prevScreen }) => {
 			colorScheme={"muted"}
 			onPress={() => navigator.navigate(prevScreen)}
 		>
-			<Text color={"muted.400"}>
-				Return to {prevScreen}
-			</Text>
+			<Text color={"muted.400"}>Return to {prevScreen}</Text>
 		</Button>
 	);
 };
