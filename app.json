@@ -7,5 +7,13 @@
       "**/*"
     ]
   },
-  "name": "health-x"
+  "name": "health-x",
+  "android": {
+      "package": "com.healthx",
+      "googleServicesFile": "./android/app/google-services.json"
+  },
+  "ios": {
+      "bundleIdentifier": "com.healthx",
+      "googleServicesFile": "./ios/healthx.xcodeproj/GoogleService-Info.plist"
+    }
 }
