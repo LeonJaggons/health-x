@@ -3,17 +3,19 @@ import {
 	Box,
 	VStack,
 	HStack,
-	Input,
 	Text,
 	Button,
 	IconButton,
 	ScrollView,
+	Input,
 } from "native-base";
+import { List, InputItem } from "@ant-design/react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useDispatch, useSelector } from "react-redux";
-import { useTailwind } from "tailwind-rn/dist";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../../firebase-api/firebase_auth";
+import showErrorToast from "./ErrorToast";
 const SignInForm = () => {
-	const tailwind = useTailwind();
 	const dispatch = useDispatch();
 	const signInCreds = useSelector((state) => state.signIn.signInCreds);
 	const [showPW, setShowPW] = React.useState(false);
@@ -24,6 +26,23 @@ const SignInForm = () => {
 
 	const setCreds = (cred, value) => {
 		dispatch({ type: "SET_CREDS", cred: cred, payload: value });
+	};
+
+	const handleSignInAttempt = () => {
+		signInWithEmailAndPassword(
+			auth,
+			signInCreds.username,
+			signInCreds.password
+		)
+			.then((userCreds) => {
+				console.log(userCreds.user);
+			})
+			.catch((err) => {
+				//
+				console.log(err.code);
+				dispatch({ type: "SET_SIGN_IN_ERROR", payload: err.code });
+				showErrorToast(err.code);
+			});
 	};
 	return (
 		<ScrollView w={"100%"}>
@@ -89,21 +108,24 @@ const SignInForm = () => {
 					/>
 				</VStack>
 				<HStack px={4} mt={4}>
-					<Button
-						bg={"#365695"}
-						leftIcon={
-							<Ionicons
-								name={"ios-checkmark-circle"}
-								color={"white"}
-								size={14}
-							/>
-						}
-						w={"90%"}
-					>
-						<Text color={"white"} bold>
-							Continue
-						</Text>
-					</Button>
+					<Box safeAreaBottom>
+						<Button
+							onPress={() => handleSignInAttempt()}
+							bg={"#365695"}
+							leftIcon={
+								<Ionicons
+									name={"ios-checkmark-circle"}
+									color={"white"}
+									size={14}
+								/>
+							}
+							w={"90%"}
+						>
+							<Text color={"white"} bold>
+								Continue
+							</Text>
+						</Button>
+					</Box>
 				</HStack>
 			</VStack>
 		</ScrollView>

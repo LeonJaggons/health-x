@@ -18,7 +18,7 @@ const SignInCover = () => {
 				mt={10}
 				mb={2}
 				source={CoverImage}
-				height={190}
+				height={180}
 				width={"100%"}
 				resizeMethod={"resize"}
 				resizeMode={"contain"}

@@ -1,10 +1,8 @@
 import React from "react";
 import { Box, Image, Text, VStack, Heading, Card } from "native-base";
-import { Ionicons } from "@expo/vector-icons";
 import SignInForm from "./SignInForm";
 import SignInCover from "./SignInCover";
 import { useSelector } from "react-redux";
-const CoverImage = require("../../doctor_cover.jpg");
 
 const SignIn = () => {
 	const appTitle = useSelector((state) => state.app.appTitle);
