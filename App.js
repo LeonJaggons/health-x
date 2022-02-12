@@ -1,20 +1,9 @@
+import 'react-native-gesture-handler';
 import React from "react";
 import {
 	NativeBaseProvider,
 	Box,
-	Text,
-	VStack,
-	Input,
 	Heading,
-	HStack,
-	Button,
-	Divider,
-	Image,
-	InputGroup,
-	InputLeftAddon,
-	InputRightAddon,
-	Collapse,
-	IconButton,
 } from "native-base";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
