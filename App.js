@@ -1,17 +1,16 @@
-import 'react-native-gesture-handler';
-import React from "react";
-import {
-	NativeBaseProvider,
-	Box,
-	Heading,
-} from "native-base";
+import "./firebase-api/firebase_auth";
+import "react-native-gesture-handler";
+import React, { useEffect } from "react";
+import { NativeBaseProvider, Box, Heading } from "native-base";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
 import SignIn from "./components/sign-in/SignIn";
-import { Provider, useSelector } from "react-redux";
+import { Provider, useDispatch, useSelector } from "react-redux";
 import store from "./redux/store";
 import SignUp from "./components/sign-up/SignUp";
+import { auth } from "./firebase-api/firebase_auth";
+import Account from "./components/account/Account";
 
 const Tab = createBottomTabNavigator();
 export default function App() {
@@ -27,10 +26,28 @@ export default function App() {
 }
 
 const AppContent = () => {
+	const dispatch = useDispatch();
+	const fbUser = useSelector((state) => state.signIn.fbUser);
 	const isSignedIn = useSelector((state) => state.signIn.isSignedIn);
+
+	useEffect(() => {
+		auth.signOut().then(() => onAuthStateChanged(null));
+		auth.onAuthStateChanged((user) => {
+			onAuthStateChanged(user);
+		});
+	}, []);
+	const onAuthStateChanged = (user) => {
+		dispatch({ type: "SET_FB_USER", payload: user });
+	};
+
+	useEffect(() => {
+		console.log("FBUSER", fbUser);
+	}, [fbUser]);
+
 	const SignInContent = () => {
 		return <></>;
 	};
+
 	return (
 		<NavigationContainer>
 			<Tab.Navigator
@@ -40,7 +57,7 @@ const AppContent = () => {
 					tabBarActiveTintColor: "#375294",
 				}}
 			>
-				{!isSignedIn ? (
+				{fbUser ? (
 					<>
 						<Tab.Screen
 							component={NoContent}
@@ -111,7 +128,7 @@ const AppContent = () => {
 							}}
 						/>
 						<Tab.Screen
-							component={NoContent}
+							component={Account}
 							name={"Account"}
 							options={{
 								tabBarIcon: ({ size, color, focused }) => (
