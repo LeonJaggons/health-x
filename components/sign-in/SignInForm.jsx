@@ -9,20 +9,21 @@ import {
 	ScrollView,
 	Input,
 } from "native-base";
-import { List, InputItem } from "@ant-design/react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useDispatch, useSelector } from "react-redux";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../firebase-api/firebase_auth";
 import showErrorToast from "./ErrorToast";
+import { getHealthXUser } from "../../firebase-api/firebase_firestore";
 const SignInForm = () => {
 	const dispatch = useDispatch();
 	const signInCreds = useSelector((state) => state.signIn.signInCreds);
 	const [showPW, setShowPW] = React.useState(false);
+	const user = useSelector((state) => state.signIn.user)
 
 	React.useEffect(() => {
-		console.log(signInCreds);
-	}, [signInCreds]);
+		console.log("USER", user);
+	}, [user]);
 
 	const setCreds = (cred, value) => {
 		dispatch({ type: "SET_CREDS", cred: cred, payload: value });
@@ -31,11 +32,11 @@ const SignInForm = () => {
 	const handleSignInAttempt = () => {
 		signInWithEmailAndPassword(
 			auth,
-			signInCreds.username,
-			signInCreds.password
+			signInCreds.username.trim(),
+			signInCreds.password.trim()
 		)
 			.then((userCreds) => {
-				console.log(userCreds.user);
+				getHealthXUser(userCreds.user.uid)
 			})
 			.catch((err) => {
 				//
@@ -120,6 +121,9 @@ const SignInForm = () => {
 								/>
 							}
 							w={"90%"}
+							isDisabled={
+								signInCreds.username.trim() === "" || signInCreds.password.trim() === "" || signInCreds.password.length < 8
+							}
 						>
 							<Text color={"white"} bold>
 								Continue
